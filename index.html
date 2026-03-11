@@ -4,6 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Rummy Buddy</title>
+    <!-- Security -->
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <!-- SEO -->
+    <meta name="description" content="Rummy Buddy — A fun score tracker for rummy card games. Track scores, manage rounds, and play with friends. Built by Vish.">
+    <meta name="author" content="Vishnu Vardhan Potharaju">
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0a0f1e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Rummy Buddy">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230a0f1e'/><text x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-size='45' fill='%23fbbf24' font-family='system-ui' font-weight='bold'>♠</text></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-size='65' fill='%23fbbf24'>♠</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -69,7 +83,13 @@
             transition: background-color 0.5s ease, color 0.5s ease;
             overflow-x: hidden;
             min-height: 100vh;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
         }
+        /* Allow selection in inputs */
+        input, textarea { -webkit-user-select: text; user-select: text; }
         h1, h2, h3, h4 {
             font-family: var(--font-heading);
             color: var(--heading);
@@ -618,7 +638,7 @@
 
     <!-- Footer -->
     <footer class="app-footer">
-        <p>Developed by <span class="vish">Vish</span> · <a href="https://www.vishnupotharaju.com" style="color:var(--accent); text-decoration:none;" target="_blank" rel="noopener noreferrer">vishnupotharaju.com</a></p>
+        <p>Built with <span style="color:var(--danger)">♥</span> by <span class="vish">Vish</span> · © <span id="footerYear"></span> All Rights Reserved · <a href="https://www.vishnupotharaju.com" style="color:var(--accent); text-decoration:none;" target="_blank" rel="noopener noreferrer">vishnupotharaju.com</a></p>
     </footer>
 
     <script>
@@ -638,6 +658,9 @@
         const LS_KNOWN_PLAYERS = 'rummyScorer_knownPlayers_v10_3';
         const LS_SAVED_GAMES_LIST = 'rummyScorer_savedGamesList_v10_3';
         const LS_THEME = 'rummyScorer_theme_v10_3';
+
+        // XSS prevention - sanitize any user input before innerHTML
+        function esc(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
 
         // Theme icons (matching portfolio style)
         const darkLabel = 'Dark 🌙';
@@ -743,7 +766,7 @@
             playersForNewGameSetup.forEach((player) => {
                 const div = document.createElement('div');
                 div.className = 'player-chip chip-selected';
-                div.innerHTML = `<span>${player.name}</span><span class="chip-delete" data-id="${player.id}">×</span>`;
+                div.innerHTML = `<span>${esc(player.name)}</span><span class="chip-delete" data-id="${player.id}">×</span>`;
                 div.querySelector('.chip-delete').addEventListener('click', (e) => removePlayerFromNewGameSetup(e.target.dataset.id));
                 playerSetupList.appendChild(div);
             });
@@ -766,7 +789,7 @@
                 div.innerHTML = `
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                         <div class="flex-grow">
-                            <p class="game-name-link">${game.name || `Game from ${getFormattedEstDate(new Date(game.lastSavedTimestamp))}`}${gameStatusInfo}</p>
+                            <p class="game-name-link">${esc(game.name) || `Game from ${getFormattedEstDate(new Date(game.lastSavedTimestamp))}`}${gameStatusInfo}</p>
                             <p class="text-xs" style="color:var(--muted)">Players: ${playerNames} · Round: ${game.currentRound} · Target: ${game.gameTargetScore}</p>
                             <p class="text-xs" style="color:var(--muted);opacity:0.7">Last Saved: ${getFormattedEstDate(new Date(game.lastSavedTimestamp))}</p>
                         </div>
@@ -957,7 +980,7 @@
             const highlightNewRound = currentGame.justSubmittedNewRound;
             if (highlightNewRound) currentGame.justSubmittedNewRound = false;
             let html = '<table><thead><tr><th>Round</th>';
-            currentGame.players.forEach(p => { let d = p.isDealer ? '<span style="color:var(--accent);font-size:0.6rem"> (D)</span>' : ''; html += `<th>${p.name}${d}</th>`; });
+            currentGame.players.forEach(p => { let d = p.isDealer ? '<span style="color:var(--accent);font-size:0.6rem"> (D)</span>' : ''; html += `<th>${esc(p.name)}${d}</th>`; });
             html += '</tr></thead><tbody>';
             for (let i = 0; i < currentGame.currentRound; i++) {
                 let trAttr = (highlightNewRound && i === currentGame.currentRound - 1) ? " class='new-score-row-highlight'" : "";
@@ -1016,7 +1039,7 @@
                 let dealerMark = '';
                 if ((isEditing && currentGame.roundDealerHistory && currentGame.roundDealerHistory[roundToEdit - 1] === player.id) || (!isEditing && player.isDealer)) dealerMark = '<span style="color:var(--accent);font-size:0.75rem"> (Dealer)</span>';
                 group.innerHTML = `
-                    <label class="block text-sm font-semibold mb-3" style="color:var(--heading)">${player.name}${dealerMark}</label>
+                    <label class="block text-sm font-semibold mb-3" style="color:var(--heading)">${esc(player.name)}${dealerMark}</label>
                     <div class="grid grid-cols-4 gap-2 mb-3">
                         <button class="score-option-btn" data-score="0" data-type="win">Win (0)</button>
                         <button class="score-option-btn" data-score="${currentGame.openDropScore}" data-type="OD">OD (${currentGame.openDropScore})</button>
@@ -1213,8 +1236,33 @@
             themeToggleButton.addEventListener('click', toggleTheme);
 
             loadTheme(); loadKnownPlayersDisplay(); loadSavedGamesDisplay(); renderNewGameSetupPlayersList();
+
+            // Footer year
+            var fy = document.getElementById('footerYear');
+            if (fy) fy.textContent = new Date().getFullYear();
         }
         document.addEventListener('DOMContentLoaded', initializeApp);
+
+        // ============ CONTENT PROTECTION ============
+        // Copyright (c) Vishnu Vardhan Potharaju. All Rights Reserved.
+        document.addEventListener('contextmenu', function(e) { e.preventDefault(); return false; });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F12') { e.preventDefault(); return false; }
+            if (e.ctrlKey && e.key === 'u') { e.preventDefault(); return false; }
+            if (e.ctrlKey && e.key === 's') { e.preventDefault(); return false; }
+            if (e.ctrlKey && e.key === 'c') { e.preventDefault(); return false; }
+            if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i')) { e.preventDefault(); return false; }
+            if (e.ctrlKey && e.shiftKey && (e.key === 'J' || e.key === 'j')) { e.preventDefault(); return false; }
+            if (e.ctrlKey && e.shiftKey && (e.key === 'C' || e.key === 'c')) { e.preventDefault(); return false; }
+        });
+        document.addEventListener('dragstart', function(e) { e.preventDefault(); });
+
+        // ============ PWA SERVICE WORKER ============
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('sw.js').catch(function() {});
+            });
+        }
     </script>
 </body>
 </html>
