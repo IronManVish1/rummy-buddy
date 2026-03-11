@@ -19,6 +19,9 @@
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230a0f1e'/><text x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-size='45' fill='%23fbbf24' font-family='system-ui' font-weight='bold'>♠</text></svg>">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-size='65' fill='%23fbbf24'>♠</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         /* ============ THEME VARIABLES ============ */
@@ -534,6 +537,60 @@
             font-family: var(--font-heading);
         }
 
+        /* ============ SHARING UI ============ */
+        .share-panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+            backdrop-filter: blur(12px);
+        }
+        .game-code {
+            font-family: 'Bricolage Grotesque', monospace;
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: 0.2em;
+            color: var(--accent);
+            text-align: center;
+            padding: 8px 0;
+        }
+        .sync-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: var(--muted);
+            padding: 3px 10px;
+            border-radius: 100px;
+            background: var(--icon-bg);
+        }
+        .sync-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse-sync 2s infinite;
+        }
+        .sync-dot.offline { background: var(--muted); animation: none; }
+        @keyframes pulse-sync {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        .join-section {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .join-section input {
+            font-family: 'Bricolage Grotesque', monospace;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            text-align: center;
+            max-width: 160px;
+        }
+
         /* Known player entry styling */
         #knownPlayersList .btn-secondary { text-transform: none; }
     </style>
@@ -589,6 +646,16 @@
 
             <button id="startNewGameButton" class="btn btn-primary w-full py-3 text-sm mb-6">Start New Game</button>
 
+            <!-- Join Shared Game -->
+            <div class="share-panel mb-6">
+                <label class="section-label block mb-3">Join a Friend's Game</label>
+                <div class="join-section">
+                    <input type="text" id="joinGameCodeInput" placeholder="ENTER CODE" maxlength="6">
+                    <button id="joinGameButton" class="btn btn-secondary btn-sm">Join</button>
+                </div>
+                <p class="text-xs mt-2" style="color:var(--muted)">Ask your friend for the 6-letter game code</p>
+            </div>
+
             <div>
                 <h3 class="text-lg font-semibold mb-3" style="color:var(--heading)">Saved Games</h3>
                 <div id="savedGamesContainer" class="space-y-2 max-h-80 overflow-y-auto pr-1"></div>
@@ -617,6 +684,25 @@
             <div class="grid grid-cols-2 gap-3 mb-4">
                 <button id="enterScoresButton" class="btn btn-primary">Enter Scores</button>
                 <button id="editLastRoundButton" class="btn btn-warning">Edit Last Round</button>
+            </div>
+
+            <!-- Share Game Panel -->
+            <div id="sharePanel" class="share-panel mb-4">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="section-label mb-0">Share This Game</label>
+                    <span id="syncIndicator" class="sync-indicator hidden"><span class="sync-dot"></span> Live</span>
+                </div>
+                <div id="shareCodeDisplay" class="hidden">
+                    <div class="game-code" id="gameCodeText"></div>
+                    <p class="text-xs text-center mb-3" style="color:var(--muted)">Share this code with friends to let them join</p>
+                    <div class="flex gap-2 justify-center">
+                        <button id="copyCodeButton" class="btn btn-secondary btn-sm">Copy Code</button>
+                        <button id="stopSharingButton" class="btn btn-danger btn-sm">Stop Sharing</button>
+                    </div>
+                </div>
+                <div id="shareStartPanel">
+                    <button id="shareGameButton" class="btn btn-primary btn-sm w-full">Share Game with Friends</button>
+                </div>
             </div>
 
             <div id="gameStatusMessage" class="mt-5 text-center text-xl font-semibold"></div>
@@ -649,11 +735,29 @@
             nameSuggestionLoader, currentRoundDisplay, gameTargetScoreDisplay,
             gameOpenDropDisplay, gameMiddleDropDisplay, gameFullCountDisplay, roundScoresTableContainer,
             enterScoresButton, editLastRoundButton, gameStatusMessage, autoSaveNotification,
-            scoreModal, scoreModalTitle, modalRoundNumber, modalScoreInputs, submitScoresButton, cancelScoreEntryButton;
+            scoreModal, scoreModalTitle, modalRoundNumber, modalScoreInputs, submitScoresButton, cancelScoreEntryButton,
+            joinGameCodeInput, joinGameButton, shareGameButton, shareCodeDisplay, shareStartPanel,
+            gameCodeText, copyCodeButton, stopSharingButton, syncIndicator;
 
         let playersForNewGameSetup = [];
         let currentGame = null;
         let isEditingLastRoundGlobal = false;
+        let firebaseListener = null;
+        let isSharedGame = false;
+        let currentShareCode = null;
+
+        // ============ FIREBASE INIT ============
+        const firebaseConfig = {
+            apiKey: "AIzaSyC_m6-mXbQ49jIkTHnbjnkh6IMSFwbSkgE",
+            authDomain: "rummy-buddy-a15ea.firebaseapp.com",
+            databaseURL: "https://rummy-buddy-a15ea-default-rtdb.firebaseio.com",
+            projectId: "rummy-buddy-a15ea",
+            storageBucket: "rummy-buddy-a15ea.firebasestorage.app",
+            messagingSenderId: "393257369999",
+            appId: "1:393257369999:web:69e5a65cdb8dbb9c5f8bfa"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
         const LS_KNOWN_PLAYERS = 'rummyScorer_knownPlayers_v10_3';
         const LS_SAVED_GAMES_LIST = 'rummyScorer_savedGamesList_v10_3';
@@ -661,6 +765,151 @@
 
         // XSS prevention - sanitize any user input before innerHTML
         function esc(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+        // ============ FIREBASE SHARING ============
+        function generateGameCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No I/O/0/1 to avoid confusion
+            let code = '';
+            for (let i = 0; i < 6; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+            return code;
+        }
+
+        function syncToFirebase() {
+            if (!isSharedGame || !currentShareCode || !currentGame) return;
+            const gameData = JSON.parse(JSON.stringify(currentGame));
+            gameData.lastSyncTimestamp = new Date().toISOString();
+            db.ref('games/' + currentShareCode).set(gameData).catch(err => {
+                console.error('Firebase sync error:', err);
+            });
+        }
+
+        function startListeningForChanges(code) {
+            stopListeningForChanges();
+            firebaseListener = db.ref('games/' + code).on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (!data || !currentGame) return;
+                // Only update if the remote data is newer
+                if (data.lastSyncTimestamp && currentGame.lastSavedTimestamp &&
+                    new Date(data.lastSyncTimestamp) > new Date(currentGame.lastSavedTimestamp)) {
+                    // Preserve local-only fields
+                    const wasEditing = isEditingLastRoundGlobal;
+                    currentGame = data;
+                    currentGame.players.forEach(p => {
+                        p.id = String(p.id).replace(/\./g, '_');
+                        p.scores = p.scores || [];
+                        p.reEntryEvents = p.reEntryEvents || [];
+                    });
+                    if (currentRoundDisplay) currentRoundDisplay.textContent = currentGame.currentRound;
+                    if (currentGameNameDisplay) currentGameNameDisplay.textContent = currentGame.name;
+                    renderRoundScoresTable();
+                    // Save to localStorage too
+                    let savedGames = getStoredData(LS_SAVED_GAMES_LIST) || [];
+                    const idx = savedGames.findIndex(g => String(g.id) === String(currentGame.id));
+                    if (idx > -1) savedGames[idx] = JSON.parse(JSON.stringify(currentGame));
+                    else savedGames.push(JSON.parse(JSON.stringify(currentGame)));
+                    setStoredData(LS_SAVED_GAMES_LIST, savedGames);
+                    isEditingLastRoundGlobal = wasEditing;
+                }
+            });
+            // Show sync indicator
+            if (syncIndicator) { syncIndicator.classList.remove('hidden'); syncIndicator.querySelector('.sync-dot').classList.remove('offline'); }
+        }
+
+        function stopListeningForChanges() {
+            if (firebaseListener && currentShareCode) {
+                db.ref('games/' + currentShareCode).off('value', firebaseListener);
+                firebaseListener = null;
+            }
+            if (syncIndicator) syncIndicator.classList.add('hidden');
+        }
+
+        function handleShareGame() {
+            if (!currentGame) return;
+            const code = generateGameCode();
+            currentShareCode = code;
+            isSharedGame = true;
+            currentGame.shareCode = code;
+            // Push to Firebase
+            syncToFirebase();
+            // Start listening
+            startListeningForChanges(code);
+            // Update UI
+            if (gameCodeText) gameCodeText.textContent = code;
+            if (shareCodeDisplay) shareCodeDisplay.classList.remove('hidden');
+            if (shareStartPanel) shareStartPanel.classList.add('hidden');
+            autoSaveGameProgress();
+        }
+
+        function handleStopSharing() {
+            if (!confirm('Stop sharing? Friends will no longer sync.')) return;
+            stopListeningForChanges();
+            // Remove from Firebase
+            if (currentShareCode) db.ref('games/' + currentShareCode).remove().catch(() => {});
+            isSharedGame = false;
+            currentShareCode = null;
+            if (currentGame) delete currentGame.shareCode;
+            // Update UI
+            if (shareCodeDisplay) shareCodeDisplay.classList.add('hidden');
+            if (shareStartPanel) shareStartPanel.classList.remove('hidden');
+            autoSaveGameProgress();
+        }
+
+        function handleCopyCode() {
+            if (!currentShareCode) return;
+            navigator.clipboard.writeText(currentShareCode).then(() => {
+                if (copyCodeButton) { copyCodeButton.textContent = 'Copied!'; setTimeout(() => { copyCodeButton.textContent = 'Copy Code'; }, 2000); }
+            }).catch(() => {
+                prompt('Copy this code:', currentShareCode);
+            });
+        }
+
+        function handleJoinGame() {
+            const code = joinGameCodeInput ? joinGameCodeInput.value.trim().toUpperCase() : '';
+            if (code.length !== 6) { alert('Please enter a 6-letter game code.'); return; }
+            // Check Firebase for this code
+            db.ref('games/' + code).once('value').then((snapshot) => {
+                const data = snapshot.val();
+                if (!data) { alert('Game not found. Check the code and try again.'); return; }
+                // Load the game
+                currentGame = JSON.parse(JSON.stringify(data));
+                currentGame.players.forEach(p => {
+                    p.id = String(p.id).replace(/\./g, '_');
+                    p.scores = p.scores || [];
+                    p.reEntryEvents = p.reEntryEvents || [];
+                    let baseScore = 0, sumFromRoundIndex = 0;
+                    if (p.reEntryEvents.length > 0) { const last = p.reEntryEvents[p.reEntryEvents.length - 1]; baseScore = last.newBaselineScore; sumFromRoundIndex = last.roundIndex; }
+                    let sum = 0; for (let i = sumFromRoundIndex; i < p.scores.length; i++) { if (p.scores[i]) sum += p.scores[i].points; }
+                    p.totalScore = baseScore + sum;
+                    p.eliminated = p.totalScore >= currentGame.gameTargetScore;
+                    if (p.eliminated) p.totalScore = currentGame.gameTargetScore;
+                    p.canReEnterCurrentRound = p.canReEnterCurrentRound || false;
+                    p.isDealer = p.isDealer || false;
+                    p.reEntryCount = p.reEntryCount || 0;
+                });
+                if (!currentGame.initialPlayerOrder) currentGame.initialPlayerOrder = currentGame.players.map(p => p.id);
+                if (!currentGame.roundDealerHistory) currentGame.roundDealerHistory = [];
+                currentGame.isComplete = currentGame.isComplete || false;
+                // Set as shared
+                isSharedGame = true;
+                currentShareCode = code;
+                // Save locally too
+                autoSaveGameProgress();
+                // Start listening for changes
+                startListeningForChanges(code);
+                // Show game view
+                transitionToGameView();
+                // Update share panel UI
+                setTimeout(() => {
+                    if (gameCodeText) gameCodeText.textContent = code;
+                    if (shareCodeDisplay) shareCodeDisplay.classList.remove('hidden');
+                    if (shareStartPanel) shareStartPanel.classList.add('hidden');
+                }, 400);
+                if (joinGameCodeInput) joinGameCodeInput.value = '';
+            }).catch((err) => {
+                console.error('Join error:', err);
+                alert('Error joining game. Please try again.');
+            });
+        }
 
         // Theme icons (matching portfolio style)
         const darkLabel = 'Dark 🌙';
@@ -919,6 +1168,14 @@
                 if (!currentDealerPlayer && currentGame.players.filter(p => !p.eliminated).length > 0) advanceDealer();
                 else if (!currentDealerPlayer && currentGame.players.length > 0) currentGame.players[0].isDealer = true;
                 currentGame.isComplete = currentGame.isComplete || false;
+                // Restore sharing state if game was shared
+                if (currentGame.shareCode) {
+                    isSharedGame = true;
+                    currentShareCode = currentGame.shareCode;
+                } else {
+                    isSharedGame = false;
+                    currentShareCode = null;
+                }
                 gameTargetScoreInput.value = currentGame.gameTargetScore; openDropScoreInput.value = currentGame.openDropScore;
                 middleDropScoreInput.value = currentGame.middleDropScore; fullCountScoreInput.value = currentGame.fullCountScore;
                 transitionToGameView();
@@ -936,6 +1193,8 @@
             setStoredData(LS_SAVED_GAMES_LIST, savedGames); loadSavedGamesDisplay();
             if(currentGameNameDisplay) currentGameNameDisplay.textContent = currentGame.name;
             showAutoSaveNotification();
+            // Sync to Firebase if shared
+            syncToFirebase();
         }
 
         function transitionToGameView() {
@@ -956,12 +1215,26 @@
                     let isBrandNew = currentGame.currentRound === 0 && currentGame.players.every(p => p.scores.length === 0);
                     if (isBrandNew && gameStatusMessage) { gameStatusMessage.textContent = ''; gameStatusMessage.classList.remove('winner-message-animate'); }
                     renderRoundScoresTable();
+                    // Restore share panel state
+                    if (currentGame.shareCode && isSharedGame) {
+                        currentShareCode = currentGame.shareCode;
+                        if (gameCodeText) gameCodeText.textContent = currentShareCode;
+                        if (shareCodeDisplay) shareCodeDisplay.classList.remove('hidden');
+                        if (shareStartPanel) shareStartPanel.classList.add('hidden');
+                        startListeningForChanges(currentShareCode);
+                    } else {
+                        if (shareCodeDisplay) shareCodeDisplay.classList.add('hidden');
+                        if (shareStartPanel) shareStartPanel.classList.remove('hidden');
+                    }
                     setTimeout(() => { if (gameSection) { gameSection.classList.remove('section-is-entering', 'section-animate-initial'); } }, 300);
                 }
             }, 300);
         }
 
         function transitionToSetupView() {
+            stopListeningForChanges();
+            isSharedGame = false;
+            currentShareCode = null;
             if (gameSection) gameSection.classList.add('section-is-exiting');
             setTimeout(() => {
                 if (gameSection) { gameSection.classList.add('hidden'); gameSection.classList.remove('section-is-exiting'); }
@@ -1234,6 +1507,24 @@
             submitScoresButton.addEventListener('click', handleSubmitScores);
             cancelScoreEntryButton.addEventListener('click', () => { scoreModal.classList.remove('active'); isEditingLastRoundGlobal = false; });
             themeToggleButton.addEventListener('click', toggleTheme);
+
+            // Firebase sharing DOM elements
+            joinGameCodeInput = document.getElementById('joinGameCodeInput');
+            joinGameButton = document.getElementById('joinGameButton');
+            shareGameButton = document.getElementById('shareGameButton');
+            shareCodeDisplay = document.getElementById('shareCodeDisplay');
+            shareStartPanel = document.getElementById('shareStartPanel');
+            gameCodeText = document.getElementById('gameCodeText');
+            copyCodeButton = document.getElementById('copyCodeButton');
+            stopSharingButton = document.getElementById('stopSharingButton');
+            syncIndicator = document.getElementById('syncIndicator');
+
+            // Firebase sharing event listeners
+            if (joinGameButton) joinGameButton.addEventListener('click', handleJoinGame);
+            if (joinGameCodeInput) joinGameCodeInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleJoinGame(); });
+            if (shareGameButton) shareGameButton.addEventListener('click', handleShareGame);
+            if (copyCodeButton) copyCodeButton.addEventListener('click', handleCopyCode);
+            if (stopSharingButton) stopSharingButton.addEventListener('click', handleStopSharing);
 
             loadTheme(); loadKnownPlayersDisplay(); loadSavedGamesDisplay(); renderNewGameSetupPlayersList();
 
