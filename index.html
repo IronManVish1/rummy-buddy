@@ -405,6 +405,7 @@
     </div>
     <footer class="app-footer">
         <p>Built with <span style="color:var(--danger)">♥</span> by <span class="vish">Vish</span> · © <span id="footerYear"></span> All Rights Reserved · <a href="https://www.vishnupotharaju.com" style="color:var(--accent); text-decoration:none;" target="_blank" rel="noopener noreferrer">vishnupotharaju.com</a></p>
+        <p style="font-size:0.6rem;margin-top:6px;opacity:0.5;color:var(--muted)">Personal project for educational and learning purposes only. No commercial use intended.</p>
     </footer>
     <script>
         let appTitle, setupSection, gameSection, playerNameInput, addPlayerButton, knownPlayersList, playerSetupList,
@@ -835,7 +836,7 @@
                 const isW = p.isWinner;
                 const rank = i + 1;
                 const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '#' + rank;
-                const scoreText = isW ? '0 (Winner)' : p.totalScore + ' pts' + (p.eliminated ? ' (Out)' : '') + (p.reEntryCount > 0 ? ' · Re:' + p.reEntryCount : '');
+                const scoreText = isW ? '0 Points (Winner)' : (p.eliminated ? (currentGame.gameTargetScore-1)+'+ Points' : p.totalScore+' Points') + (p.reEntryCount > 0 ? ' · Re:' + p.reEntryCount : '');
                 standingsHtml += '<div class="standing-row' + (isW ? ' winner-row' : '') + '">' +
                     '<span class="standing-rank">' + medal + '</span>' +
                     '<span class="standing-name">' + esc(p.name) + '</span>' +
@@ -844,7 +845,7 @@
 
             let metaHtml = '<span>🎯 ' + currentGame.currentRound + ' rounds</span>';
             if (duration) metaHtml += '<span>⏱️ ' + duration + '</span>';
-            metaHtml += '<span>🎯 Target: ' + currentGame.gameTargetScore + '</span>';
+            metaHtml += '<span>🎯 Target Score: ' + currentGame.gameTargetScore + '</span>';
 
             container.innerHTML = '<div class="game-summary">' +
                 '<div class="summary-trophy">🏆</div>' +
@@ -872,21 +873,20 @@
             const winner = sorted.find(p => p.isWinner);
             const duration = formatDuration(currentGame.gameStartTime);
 
-            let text = '\u{1F3C6} Rummy Buddy \u2014 Game Over!\n';
-            text += 'Winner: ' + (winner ? winner.name : 'N/A') + '\n\n';
-            text += '\u{1F4CA} Final Scores:\n';
+            let text = '\u2660 Rummy Buddy \u2014 Game Complete!\n\n';
+            text += '\u{1F3C6} ' + (winner ? winner.name : 'N/A') + ' takes the game!\n\n';
+            text += '\u{1F4CA} Final Standings:\n';
             sorted.forEach((p, i) => {
                 const rank = i + 1;
-                const scoreText = p.isWinner ? '0 (Winner)' : p.totalScore + ' pts' + (p.eliminated ? ' (Out)' : '');
-                text += rank + '. ' + p.name + ' \u2014 ' + scoreText + '\n';
+                const scoreText = p.isWinner ? '0 Points (Winner)' : (p.eliminated ? (currentGame.gameTargetScore-1)+'+ Points' : p.totalScore+' Points');
+                text += rank + '. ' + p.name + ' - ' + scoreText + '\n';
             });
-            text += '\nRounds: ' + currentGame.currentRound;
+            text += '\n\u{1F3AF} Target Score: ' + currentGame.gameTargetScore + ' \u00B7 Rounds: ' + currentGame.currentRound;
             if (duration) text += ' \u00B7 Duration: ' + duration;
-            text += '\nTarget: ' + currentGame.gameTargetScore;
-            text += '\n\nPlayed on Rummy Buddy \u2660\nrbuddy.vishnupotharaju.com';
+            text += '\n\nPlayed on \u2660 Rummy Buddy';
 
             if (navigator.share) {
-                navigator.share({ title: 'Rummy Buddy - Game Results', text: text }).catch(function(){});
+                navigator.share({ title: '\u2660 Rummy Buddy \u2014 Game Complete!', text: text }).catch(function(){});
             } else {
                 navigator.clipboard.writeText(text).then(function() {
                     showSuccess('Results copied to clipboard!', 'Copied');
