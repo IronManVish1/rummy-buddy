@@ -285,6 +285,34 @@
         .summary-meta span { display: flex; align-items: center; gap: 4px; }
         .summary-actions { display: flex; gap: 10px; }
         .summary-actions .btn { flex: 1; }
+
+        /* ============ MOBILE KEYBOARD FIX ============ */
+        .modal.active .modal-content {
+            max-height: 90vh;
+            max-height: calc(var(--vh, 90vh));
+        }
+        @media (max-width: 768px) {
+            .modal.active .modal-content {
+                max-height: 85vh;
+                max-height: calc(var(--vh, 85vh));
+                border-radius: 20px 20px 0 0;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                max-width: 100%;
+                margin: 0;
+                animation: modalSlideUp 0.3s cubic-bezier(0.25,0.46,0.45,0.94);
+            }
+            .modal.active { align-items: flex-end; padding: 0; }
+            @keyframes modalSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+            #modalScoreInputs {
+                scroll-behavior: smooth;
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: 16px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -919,6 +947,30 @@
         document.addEventListener('contextmenu',function(e){e.preventDefault();return false;});
         document.addEventListener('keydown',function(e){if(e.key==='F12'){e.preventDefault();return false;}if(e.ctrlKey&&e.key==='u'){e.preventDefault();return false;}if(e.ctrlKey&&e.key==='s'){e.preventDefault();return false;}if(e.ctrlKey&&e.key==='c'){e.preventDefault();return false;}if(e.ctrlKey&&e.shiftKey&&(e.key==='I'||e.key==='i')){e.preventDefault();return false;}if(e.ctrlKey&&e.shiftKey&&(e.key==='J'||e.key==='j')){e.preventDefault();return false;}if(e.ctrlKey&&e.shiftKey&&(e.key==='C'||e.key==='c')){e.preventDefault();return false;}});
         document.addEventListener('dragstart',function(e){e.preventDefault();});
+
+        // ============ MOBILE KEYBOARD HANDLING ============
+        // Track visual viewport for keyboard
+        function updateVH() {
+            const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+            document.documentElement.style.setProperty('--vh', vh + 'px');
+        }
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', updateVH);
+            window.visualViewport.addEventListener('scroll', updateVH);
+        }
+        window.addEventListener('resize', updateVH);
+        updateVH();
+
+        // Auto-scroll focused input into view inside score modal
+        document.addEventListener('focusin', function(e) {
+            if (e.target && (e.target.tagName === 'INPUT') && scoreModal && scoreModal.classList.contains('active')) {
+                setTimeout(function() {
+                    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
+            }
+        });
+
+
         window.addEventListener('beforeunload',function(){stopListeningForChanges();});
         if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
     </script>
