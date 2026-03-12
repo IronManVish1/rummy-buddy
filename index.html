@@ -836,7 +836,7 @@
                 const isW = p.isWinner;
                 const rank = i + 1;
                 const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '#' + rank;
-                const scoreText = isW ? '0 Points (Winner)' : (p.eliminated ? (currentGame.gameTargetScore-1)+'+ Points' : p.totalScore+' Points') + (p.reEntryCount > 0 ? ' · Re:' + p.reEntryCount : '');
+                const scoreText = isW ? p.totalScore+' Points (Winner)' : (currentGame.gameTargetScore-1)+'+ Points' + (p.reEntryCount > 0 ? ' · Re:' + p.reEntryCount : '');
                 standingsHtml += '<div class="standing-row' + (isW ? ' winner-row' : '') + '">' +
                     '<span class="standing-rank">' + medal + '</span>' +
                     '<span class="standing-name">' + esc(p.name) + '</span>' +
@@ -878,7 +878,7 @@
             text += '\u{1F4CA} Final Standings:\n';
             sorted.forEach((p, i) => {
                 const rank = i + 1;
-                const scoreText = p.isWinner ? '0 Points (Winner)' : (p.eliminated ? (currentGame.gameTargetScore-1)+'+ Points' : p.totalScore+' Points');
+                const scoreText = p.isWinner ? p.totalScore+' Points (Winner)' : (currentGame.gameTargetScore-1)+'+ Points';
                 text += rank + '. ' + p.name + ' - ' + scoreText + '\n';
             });
             text += '\n\u{1F3AF} Target Score: ' + currentGame.gameTargetScore + ' \u00B7 Rounds: ' + currentGame.currentRound;
