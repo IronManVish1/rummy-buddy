@@ -357,56 +357,28 @@
         }
 
         /* ============ DEALER FLOWING GOLD HIGHLIGHT ============ */
-        @property --dealer-angle {
-            syntax: '<angle>';
-            initial-value: 0deg;
-            inherits: false;
-        }
-        @keyframes dealerGlow {
-            0% { --dealer-angle: 0deg; }
-            100% { --dealer-angle: 360deg; }
+        @keyframes dealerPulse {
+            0% { box-shadow: inset 0 0 0 2px var(--accent), 0 0 8px var(--accent-glow); }
+            50% { box-shadow: inset 0 0 0 2px var(--accent-alt), 0 0 14px rgba(249,115,22,0.3); }
+            100% { box-shadow: inset 0 0 0 2px var(--accent), 0 0 8px var(--accent-glow); }
         }
         .dealer-highlight {
-            position: relative;
-            background: var(--surface);
-        }
-        .dealer-highlight::before {
-            content: '';
-            position: absolute;
-            inset: -1px;
-            border-radius: 4px;
-            padding: 1px;
-            background: conic-gradient(from var(--dealer-angle), var(--accent), var(--accent-alt), transparent 40%, transparent 60%, var(--accent-alt), var(--accent));
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            animation: dealerGlow 3s linear 3;
-            pointer-events: none;
+            box-shadow: inset 0 0 0 2px var(--accent), 0 0 8px var(--accent-glow);
+            animation: dealerPulse 2s ease-in-out 5;
+            border-radius: 6px;
         }
         .dealer-glow-example {
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            position: relative;
             padding: 2px 8px;
             border-radius: 6px;
             font-size: 0.6rem;
             font-weight: 700;
             color: var(--accent);
             vertical-align: middle;
-        }
-        .dealer-glow-example::before {
-            content: '';
-            position: absolute;
-            inset: -1px;
-            border-radius: 6px;
-            padding: 1px;
-            background: conic-gradient(from var(--dealer-angle), var(--accent), var(--accent-alt), transparent 40%, transparent 60%, var(--accent-alt), var(--accent));
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            animation: dealerGlow 3s linear 3;
-            pointer-events: none;
+            box-shadow: inset 0 0 0 1.5px var(--accent), 0 0 6px var(--accent-glow);
+            animation: dealerPulse 2s ease-in-out 5;
         }
     </style>
 </head>
