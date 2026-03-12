@@ -63,11 +63,11 @@
         .app-logo .rummy { color: var(--heading); } .app-logo .dot { color: var(--accent); }
         .theme-toggle { display: flex; align-items: center; gap: 5px; padding: 8px 16px; border-radius: 12px; background: var(--icon-bg); border: 1px solid var(--border); cursor: pointer; color: var(--accent); font-family: var(--font-body); font-size: 0.78rem; font-weight: 600; transition: all 0.3s ease; -webkit-tap-highlight-color: transparent; }
         .theme-toggle:hover { border-color: var(--accent); } .theme-toggle:active { transform: scale(0.95); }
-        input[type="text"], input[type="number"] { font-family: var(--font-body); font-size: 0.9rem; background: var(--input-bg); color: var(--heading); border: 1px solid var(--input-border); border-radius: 14px; padding: 12px 18px; width: 100%; outline: none; transition: border-color 0.3s ease, box-shadow 0.3s ease; }
+        input[type="text"], input[type="number"] { font-family: var(--font-body); font-size: 0.85rem; background: var(--input-bg); color: var(--heading); border: 1px solid var(--input-border); border-radius: 12px; padding: 10px 16px; width: 100%; outline: none; transition: border-color 0.3s ease, box-shadow 0.3s ease; height: 44px; }
         input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
-        .btn { font-family: var(--font-body); font-weight: 700; border: none; cursor: pointer; border-radius: 14px; padding: 12px 24px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em; transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94); display: inline-flex; align-items: center; justify-content: center; gap: 6px; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+        .btn { font-family: var(--font-body); font-weight: 700; border: none; cursor: pointer; border-radius: 12px; padding: 10px 22px; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.04em; transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94); display: inline-flex; align-items: center; justify-content: center; gap: 6px; -webkit-tap-highlight-color: transparent; touch-action: manipulation; height: 44px; }
         .btn:active { transform: scale(0.95); }
-        .btn-sm { padding: 10px 18px; font-size: 0.75rem; border-radius: 12px; }
+        .btn-sm { padding: 8px 16px; font-size: 0.72rem; border-radius: 10px; height: 38px; }
         .btn-primary { background: var(--btn-bg); color: var(--btn-text); box-shadow: 0 4px 15px var(--accent-glow); }
         .btn-primary:hover { box-shadow: 0 6px 25px var(--accent-glow); transform: translateY(-1px); }
         .btn-secondary { background: var(--icon-bg); color: var(--accent); border: 1px solid var(--border); }
@@ -141,8 +141,9 @@
         .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); animation: pulse-sync 2s infinite; }
         .sync-dot.offline { background: var(--muted); animation: none; }
         @keyframes pulse-sync { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-        .join-section { display: flex; gap: 10px; align-items: center; }
-        .join-section input { font-family: 'Bricolage Grotesque', monospace; font-size: 1.1rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; text-align: center; max-width: 170px; }
+        .join-section { display: flex; gap: 10px; align-items: stretch; }
+        .join-section input { font-family: 'Bricolage Grotesque', monospace; font-size: 0.9rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; text-align: center; flex: 1; min-width: 0; height: 44px; }
+        .join-section .btn { white-space: nowrap; height: 44px; }
         .share-options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
         .share-options-grid .btn { width: 100%; }
         .qr-container { display: flex; justify-content: center; padding: 12px 0 8px; }
@@ -151,22 +152,26 @@
         .setup-divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; opacity: 0.5; }
         @media (max-width: 768px) {
             .app-logo { font-size: 1.3rem; } .theme-toggle { padding: 8px 14px; font-size: 0.75rem; }
-            .btn { padding: 12px 20px; font-size: 0.8rem; } .btn-sm { padding: 10px 16px; font-size: 0.72rem; }
+            .btn { height: 42px; padding: 8px 18px; font-size: 0.78rem; } .btn-sm { height: 36px; padding: 7px 14px; font-size: 0.7rem; }
+            input[type="text"], input[type="number"] { height: 42px; padding: 8px 14px; font-size: 0.82rem; }
+            .join-section input, .join-section .btn { height: 42px; }
             th, td { padding: 10px 12px; font-size: 0.78rem; } .score-option-btn { font-size: 0.72rem; padding: 10px 8px; }
             .saved-game-item { padding: 14px 16px; }
         }
         @media (max-width: 480px) {
             .app-container { padding: 12px; } .app-logo { font-size: 1.2rem; }
             .theme-toggle { padding: 7px 12px; font-size: 0.72rem; gap: 4px; }
-            .btn { padding: 12px 18px; font-size: 0.78rem; border-radius: 12px; }
-            .btn-sm { padding: 9px 14px; font-size: 0.7rem; }
+            .btn { height: 40px; padding: 8px 16px; font-size: 0.75rem; border-radius: 10px; }
+            .btn-sm { height: 34px; padding: 6px 12px; font-size: 0.68rem; }
+            input[type="text"], input[type="number"] { height: 40px; padding: 8px 14px; font-size: 0.82rem; border-radius: 10px; }
+            .join-section input, .join-section .btn { height: 40px; }
             th, td { padding: 8px 10px; font-size: 0.72rem; }
             .score-option-btn { font-size: 0.68rem; padding: 9px 6px; }
             .player-chip { font-size: 0.8rem; padding: 9px 16px; }
-            input[type="text"], input[type="number"] { padding: 11px 16px; font-size: 0.88rem; }
             .glass-card { border-radius: 18px; }
             .blob-1 { width: 250px; height: 250px; opacity: 0.05; } .blob-2 { width: 180px; height: 180px; opacity: 0.04; }
             fieldset { padding: 16px; }
+            #startNewGameButton { height: 46px !important; }
         }
 
         /* ============ CUSTOM IN-APP DIALOG ============ */
@@ -276,7 +281,7 @@
                 <label for="playerNameInput" class="section-label block mb-2">Add New Player</label>
                 <div class="flex gap-3">
                     <input type="text" id="playerNameInput" placeholder="Enter player name" class="flex-1">
-                    <button id="addPlayerButton" class="btn btn-primary btn-sm">Add</button>
+                    <button id="addPlayerButton" class="btn btn-primary">Add</button>
                 </div>
             </div>
             <div class="mb-6">
@@ -296,13 +301,13 @@
                     <div><label for="fullCountScoreInput" class="block text-xs font-medium mb-2" style="color:var(--muted)">Full Count</label><input type="number" id="fullCountScoreInput" value="80"></div>
                 </div>
             </fieldset>
-            <button id="startNewGameButton" class="btn btn-primary w-full py-4 text-sm mb-6" style="font-size:0.9rem">Start New Game</button>
+            <button id="startNewGameButton" class="btn btn-primary w-full mb-6" style="height:48px;font-size:0.88rem;">Start New Game</button>
             <hr class="setup-divider">
             <div class="share-panel mb-6">
                 <label class="section-label block mb-3">Join a Friend's Game</label>
                 <div class="join-section">
                     <input type="text" id="joinGameCodeInput" placeholder="ENTER CODE" maxlength="6">
-                    <button id="joinGameButton" class="btn btn-secondary btn-sm">Join</button>
+                    <button id="joinGameButton" class="btn btn-secondary">Join</button>
                 </div>
                 <p class="text-xs mt-3" style="color:var(--muted)">Ask your friend for the 6-letter game code or use their link</p>
             </div>
