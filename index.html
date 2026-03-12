@@ -592,7 +592,7 @@
         async function handleJoinGame() {
             const code=joinGameCodeInput?joinGameCodeInput.value.trim().toUpperCase():'';
             if(code.length!==6){await showAlert('Please enter a valid 6-letter game code.','Invalid Code');return;}
-            db.ref('games/'+code).once('value').then(snap=>{
+            db.ref('games/'+code).once('value').then(async snap=>{
                 const d=snap.val(); if(!d){await showAlert('No game found with that code. Check with your friend and try again.','Game Not Found','error');return;}
                 currentGame=JSON.parse(JSON.stringify(d));
                 currentGame.players.forEach(p=>{
